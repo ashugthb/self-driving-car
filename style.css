@@ -12,3 +12,19 @@ body {
 #networkCanvas {
     background-color: black;
 }
+
+#infoPanel {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: rgba(255, 255, 255, 0.8);
+    padding: 10px;
+    border-radius: 4px;
+}
+
+#qValues {
+    margin-top: 5px;
+    font-family: monospace;
+    font-size: 12px;
+    text-align: left;
+}

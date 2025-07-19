@@ -7,6 +7,11 @@
 </head>
 
 <body>
+    <div id="infoPanel">
+        <button id="startBtn">Start RL</button>
+        <p>Click the button to train the car using reinforcement learning.</p>
+        <div id="qValues"></div>
+    </div>
     <canvas id="carCanvas"></canvas>
     <canvas id="networkCanvas"></canvas>
     <script src="network.js"></script>
@@ -15,6 +20,7 @@
     <script src="utils.js"></script>
     <script src="road.js"></script>
     <script src="controls.js"></script>
+    <script src="rl.js"></script>
     <script src="car.js"></script>
     <script src="main.js"></script>
 </body>
