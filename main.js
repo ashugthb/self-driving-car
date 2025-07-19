@@ -8,7 +8,7 @@ const carCtx = carCanvas.getContext('2d')
 const networkCtx = networkCanvas.getContext('2d')
 
 const road = new Road(carCanvas.width / 2, carCanvas.width * 0.9)
-const car = new Car(road.getLaneCenter(1), 100, 30, 50, 'KEYS')
+const car = new Car(road.getLaneCenter(1), 100, 30, 50, 'AI')
 const traffic = [
     new Car(road.getLaneCenter(1), -300, 30, 40, 'DUMMY', 2),
     new Car(road.getLaneCenter(1), -400, 80, 40, 'DUMMY', 2),
@@ -29,7 +29,16 @@ for (let i = 0; i < 50; i++) {
     traffic.push(newcar)
 }
 
-animate()
+const qDiv = document.getElementById('qValues')
+const startBtn = document.getElementById('startBtn')
+let running = false
+startBtn.onclick = () => {
+    if (!running) {
+        running = true
+        animate()
+    }
+}
+
 function animate() {
     for (let i = 0; i < traffic.length; i++) {
         traffic[i].update(road.borders, [])
@@ -47,6 +56,14 @@ function animate() {
     }
 
     car.draw(carCtx, 'green')
+
+    if (car.brain) {
+        const state = car.brain.getState(car.sensor.readings)
+        const q = car.brain.qTable[state] || {}
+        qDiv.textContent = Object.entries(q)
+            .map(([a, v]) => `${a}: ${v.toFixed(2)}`)
+            .join(' | ')
+    }
 
     requestAnimationFrame(animate)
 }

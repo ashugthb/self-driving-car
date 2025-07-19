@@ -18,74 +18,70 @@ class Car {
 
         if (controlType != 'DUMMY') {
             this.sensor = new Sensors(this)
-            // this.brain = new NeuralNetwork([
-            //     this.sensor.rayCount,
-            //     10,
-            //     20,
-            //     10,
-            //     4,
-            // ])
+        }
+
+        if (this.useBrain) {
+            this.brain = new RLBrain(['forward', 'left', 'right', 'backward'])
+            this.lastState = null
+            this.lastAction = null
         }
 
         this.controls = new Controls(controlType)
     }
     update(roadBorders, traffic) {
         if (!this.damaged) {
-            this.#move()
-            this.polygon = this.#cratePolygon()
-
-            this.damaged = this.#assessDamage(roadBorders, traffic)
             if (this.sensor) {
                 this.sensor.update(roadBorders, traffic)
-                const offset = this.sensor.readings.map((s) =>
-                    s == null ? 0 : 1 - s.offset
-                )
-                console.log(this.sensor.readings)
-                console.log(this.controls)
+            }
 
-                for (let i = 0; i < this.sensor.readings.length; i++) {
-                    if (this.sensor.readings[i] != null) {
-                        if (i < 9 / 2) {
-                            if (this.sensor.readings[i].offset < 0.9) {
-                                this.controls.right = true
-                                this.controls.left = false
-                            } else {
-                                this.controls.right = false
-                                this.controls.left = false
-                            }
-                        } else if (i > 9 / 2) {
-                            if (this.sensor.readings[i].offset < 0.6) {
-                                this.controls.left = true
-                                this.controls.right = false
-                            } else {
-                                this.controls.left = false
-                                this.controls.right = false
-                            }
-                        } else {
-                            if (this.sensor.readings[i / 2].offset < 0.6) {
-                                this.controls.right = true
-                                this.controls.left = false
-                            } else {
-                                this.controls.right = false
-                                this.controls.left = false
-                            }
-                        }
-                    }
-                    this.controls.forward = true
-                }
-                // const outputs = NeuralNetwork.feedForward(offset, this.brain)
-                // console.log(outputs)
-                // if (this.useBrain) {
-                //     this.controls.forward = outputs[0]
-                //     this.controls.left = outputs[1]
-                //     this.controls.right = outputs[2]
-                //     this.controls.backward = outputs[3]
-                // }
+            if (this.useBrain) {
+                const state = this.brain.getState(this.sensor.readings)
+                const action = this.brain.chooseAction(state)
+                this.#applyAction(action)
+                this.lastState = state
+                this.lastAction = action
+            }
+
+            this.#move()
+            this.polygon = this.#cratePolygon()
+            this.damaged = this.#assessDamage(roadBorders, traffic)
+
+            if (this.sensor) {
+                this.sensor.update(roadBorders, traffic)
+            }
+
+            if (this.useBrain && this.lastState && this.lastAction) {
+                const nextState = this.brain.getState(this.sensor.readings)
+                const reward = this.damaged ? -1 : 0.1
+                this.brain.update(this.lastState, this.lastAction, reward, nextState)
             }
         } else {
             setTimeout(() => {
                 window.location.reload()
             }, 1000)
+        }
+    }
+
+    #applyAction(action) {
+        this.controls.forward = false
+        this.controls.left = false
+        this.controls.right = false
+        this.controls.backward = false
+        switch (action) {
+            case 'forward':
+                this.controls.forward = true
+                break
+            case 'left':
+                this.controls.left = true
+                this.controls.forward = true
+                break
+            case 'right':
+                this.controls.right = true
+                this.controls.forward = true
+                break
+            case 'backward':
+                this.controls.backward = true
+                break
         }
     }
     #assessDamage(roadBorders, traffic) {
