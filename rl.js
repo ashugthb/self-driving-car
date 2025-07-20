@@ -4,14 +4,17 @@ class RLBrain {
         this.actions = actions
         this.alpha = 0.1
         this.gamma = 0.95
-        this.epsilon = 0.1
+        this.epsilon = 1
+        this.minEpsilon = 0.05
+        this.epsilonDecay = 0.995
     }
 
-    getState(sensorReadings) {
-        if (!sensorReadings) return 'null'
-        return sensorReadings
-            .map((s) => (s && s.offset < 0.5 ? 1 : 0))
-            .join('')
+    getState(sensorReadings, angle) {
+        const s = sensorReadings
+            ? sensorReadings.map((r) => (r && r.offset < 0.5 ? 1 : 0)).join('')
+            : 'null'
+        const bucket = Math.round(angle / (Math.PI / 4)) + 4
+        return `${s}_${bucket}`
     }
 
     chooseAction(state) {
@@ -36,11 +39,16 @@ class RLBrain {
         if (!this.qTable[state][action]) this.qTable[state][action] = 0
 
         const nextQ = this.qTable[nextState] || {}
-        const nextMax = Math.max(
-            ...this.actions.map((a) => nextQ[a] || 0)
-        )
+        const nextMax = Math.max(...this.actions.map((a) => nextQ[a] || 0))
         this.qTable[state][action] =
             (1 - this.alpha) * this.qTable[state][action] +
             this.alpha * (reward + this.gamma * nextMax)
+    }
+
+    endEpisode() {
+        this.epsilon = Math.max(
+            this.minEpsilon,
+            this.epsilon * this.epsilonDecay
+        )
     }
 }

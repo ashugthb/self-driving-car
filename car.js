@@ -28,6 +28,16 @@ class Car {
 
         this.controls = new Controls(controlType)
     }
+    reset(x, y) {
+        this.x = x
+        this.y = y
+        this.speed = 0
+        this.angle = 0
+        this.damaged = false
+        this.lastState = null
+        this.lastAction = null
+    }
+
     update(roadBorders, traffic) {
         if (!this.damaged) {
             if (this.sensor) {
@@ -35,7 +45,10 @@ class Car {
             }
 
             if (this.useBrain) {
-                const state = this.brain.getState(this.sensor.readings)
+                const state = this.brain.getState(
+                    this.sensor.readings,
+                    this.angle
+                )
                 const action = this.brain.chooseAction(state)
                 this.#applyAction(action)
                 this.lastState = state
@@ -51,14 +64,22 @@ class Car {
             }
 
             if (this.useBrain && this.lastState && this.lastAction) {
-                const nextState = this.brain.getState(this.sensor.readings)
-                const reward = this.damaged ? -1 : 0.1
-                this.brain.update(this.lastState, this.lastAction, reward, nextState)
+                const nextState = this.brain.getState(
+                    this.sensor.readings,
+                    this.angle
+                )
+                let reward = this.damaged ? -1 : 0.1
+                reward += this.speed > 0 ? 0.1 : -0.05
+                reward -= Math.abs(this.angle) * 0.1
+                this.brain.update(
+                    this.lastState,
+                    this.lastAction,
+                    reward,
+                    nextState
+                )
             }
         } else {
-            setTimeout(() => {
-                window.location.reload()
-            }, 1000)
+            // training loop will reset the car
         }
     }
 
