@@ -72,4 +72,12 @@ class RLBrain {
             this.epsilon * this.epsilonDecay
         )
     }
+
+    getQValues(state) {
+        const q = {}
+        for (const a of this.actions) {
+            q[a] = this.#dot(this.weights[a], state)
+        }
+        return q
+    }
 }

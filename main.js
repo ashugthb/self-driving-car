@@ -78,7 +78,7 @@ function animate() {
 
     if (car.brain) {
         const state = car.brain.getState(car.sensor.readings, car.angle)
-        const q = car.brain.qTable[state] || {}
+        const q = car.brain.getQValues(state)
         qDiv.textContent = Object.entries(q)
             .map(([a, v]) => `${a}: ${v.toFixed(2)}`)
             .join(' | ')
