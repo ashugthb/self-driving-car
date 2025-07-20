@@ -21,7 +21,11 @@ class Car {
         }
 
         if (this.useBrain) {
-            this.brain = new RLBrain(['forward', 'left', 'right', 'backward'])
+            const featureCount = this.sensor.rayCount + 3
+            this.brain = new RLBrain(
+                ['forward', 'left', 'right', 'backward'],
+                featureCount
+            )
             this.lastState = null
             this.lastAction = null
         }
@@ -69,7 +73,15 @@ class Car {
                     this.angle
                 )
                 let reward = this.damaged ? -1 : 0.1
-                reward += this.speed > 0 ? 0.1 : -0.05
+                if (this.sensor && this.sensor.readings.length > 0) {
+                    const avgDist =
+                        this.sensor.readings.reduce(
+                            (sum, r) => sum + (r ? 1 - r.offset : 1),
+                            0
+                        ) / this.sensor.readings.length
+                    reward += avgDist * 0.1
+                }
+                reward += (this.speed / this.maxSpeed) * 0.2
                 reward -= Math.abs(this.angle) * 0.1
                 this.brain.update(
                     this.lastState,
